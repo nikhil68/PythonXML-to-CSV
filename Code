@@ -1,0 +1,59 @@
+# Nikhil Gupta's Python Prog for XML to CSV 25Aug'19
+
+import xml.etree.ElementTree as xml
+import csv
+import os
+
+OUTPUT = "CovertedFile.csv"
+
+def parse_xml(file):
+	tree = xml.parse(file)
+	root = tree.getroot()
+
+	video = []
+
+	for frame in root.findall("./frame"):
+		id = frame.attrib["Id"]
+
+		for child in frame:
+
+			current_frame = {"Frame id":int(id)}
+
+			if child.tag == "BBox":
+
+				current_frame.update({"Bbox id":int(child.attrib["ID"])})
+				current_frame.update({"Tracking id":int(child.attrib["TrackingID"])})
+				current_frame.update({"Object type":child.attrib["objectType"]})
+
+				i = 1
+
+				for point in child:
+					
+					if point.tag == "Point":
+
+						current_frame.update({"X" + str(i):int(point.attrib["X"])})
+						current_frame.update({"Y" + str(i):int(point.attrib["Y"])})
+
+						i+=1
+
+				video.append(current_frame)
+
+	return video
+
+
+def savetoCSV(video, output):
+
+	fields = video[0].keys()
+
+	with open(output, 'w', newline='') as csvfile:
+
+		writer = csv.DictWriter(csvfile, fieldnames = fields) 
+		writer.writeheader() 
+		writer.writerows(video)
+
+
+files = os.listdir()
+for file in files:				# finding all the files with .xmL extension in the current directory
+	if file.endswith(".xml"):
+		video = parse_xml(file)   # calling the function
+		savetoCSV(video, OUTPUT)  #saving into a CSV 
